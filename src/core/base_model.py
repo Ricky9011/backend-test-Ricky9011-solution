@@ -12,5 +12,5 @@ class Model(BaseModel):
             dt.datetime: lambda v: v.isoformat(),
             Exception: lambda e: str(e),
         }
-        allow_mutation = True
-        keep_untouched = (cached_property,)
+        frozen = False
+        ignored_types = (cached_property,)
