@@ -10,6 +10,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from core.base_model import Model
+from core.models import EventOutbox  # Import the EventOutbox model
 
 logger = structlog.get_logger(__name__)
 
@@ -48,15 +49,21 @@ class EventLogClient:
         self,
         data: list[Model],
     ) -> None:
+
+        # Instead of inserting directly into clickhouse, save to EventOutbox
         try:
-            self._client.insert(
-                data=self._convert_data(data),
-                column_names=EVENT_LOG_COLUMNS,
-                database=settings.CLICKHOUSE_SCHEMA,
-                table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
-            )
+            for event in data:
+                EventOutbox.objects.create(
+                    event_type=self._to_snake_case(event.__class__.__name__),
+                    event_date_time=timezone.now(),
+                    environment=settings.ENVIRONMENT,
+                    event_context=event.model_dump_json(),  # JSON data
+                    metadata_version=1,  # Set appropriate version
+                )
+            logger.info("Events successfully saved to EventOutbox for async processing")
         except DatabaseError as e:
-            logger.error('unable to insert data to clickhouse', error=str(e))
+            logger.error('unable to save event to outbox', error=str(e))
+
 
     def query(self, query: str) -> Any:  # noqa: ANN401
         logger.debug('executing clickhouse query', query=query)

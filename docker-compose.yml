@@ -37,6 +37,28 @@ services:
     ports:
       - 6379:6379
 
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core beat -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
     ports:

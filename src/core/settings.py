@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # project apps
+    'core',
     'users',
 ]
 
@@ -65,6 +66,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
+
+CELERY_BROKER_URL = 'redis://redis:6379/0'  # Or your chosen broker
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+CELERY_BEAT_SCHEDULE = {
+    'process-event-outbox-every-minute': {
+        'task': 'core.tasks.process_event_outbox',
+        'schedule': 60.0,  # Runs every 60 seconds
+    },
+}
+
 
 CLICKHOUSE_HOST = env('CLICKHOUSE_HOST', default='clickhouse')
 CLICKHOUSE_PORT = env('CLICKHOUSE_HOST', default=8123)
@@ -110,7 +121,7 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER = env("CELERY_BROKER", default="redis://redis:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
@@ -144,6 +155,16 @@ LOGGING = {
         "faker": {
             "level": "INFO",
             "propagate": False,
+        },
+        "celery_tasks": {
+            "handlers": ["default"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["default"],
+            "level": "INFO",
+            "propagate": True,
         },
     },
     "root": {

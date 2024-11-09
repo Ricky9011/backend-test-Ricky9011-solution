@@ -21,3 +21,16 @@ class TimeStampedModel(models.Model):
             update_fields.add('updated_at')
 
         super().save(force_insert, force_update, using, update_fields)
+
+
+class EventOutbox(models.Model):
+    event_type = models.CharField(max_length=255)
+    event_date_time = models.DateTimeField(auto_now_add=True)
+    environment = models.CharField(max_length=100)
+    event_context = models.JSONField()  # Store JSON payload
+    metadata_version = models.BigIntegerField()
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["event_date_time"]),
+        ]
