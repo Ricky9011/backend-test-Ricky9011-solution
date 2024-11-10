@@ -1,5 +1,5 @@
 from django.contrib.auth.models import AbstractBaseUser
-from django.db import models
+from django.db import models, transaction
 
 from core.models import TimeStampedModel
 
@@ -17,6 +17,16 @@ class User(TimeStampedModel, AbstractBaseUser):
     class Meta(AbstractBaseUser.Meta):
         verbose_name = 'User'
         verbose_name_plural = 'Users'
+
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None, # noqa
+    ) -> None:
+        with transaction.atomic():
+            super().save(force_insert, force_update, using, update_fields)
+
+            # import here to avoid circular import
+            from outbox.models import OutboxUser
+            OutboxUser.objects.create(user=self)
 
     def __str__(self) -> str:
         if all([self.first_name, self.last_name]):
