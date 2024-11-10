@@ -38,18 +38,17 @@ services:
       - 5432:5432
 
   redis:
+    container_name: redis
     image: redis:6-alpine
-    networks:
-      - default
     ports:
       - 6379:6379
 
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
-    ports:
-      - 8123:8123
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - 8123:8123
 
 
 volumes:
