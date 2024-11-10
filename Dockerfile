@@ -29,7 +29,7 @@ RUN pip install redis
 COPY . .
 
 # Set environment variables
-ENV CELERY_BROKER_URL=redis://redis:6379/0
+ENV CELERY_BROKER_URL=redis://localhost:6379/0
 
 # Run Celery worker (this is the command that runs Celery)
 CMD ["celery", "-A", "core", "worker", "--loglevel=info"]

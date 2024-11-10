@@ -70,4 +70,6 @@ In src/users/use_cases/create_user_tests.py, I edited test_event_log_entry_publi
 ### 4. docker-compose.yml and settings.py
 Updated docker-compose.yml and settings.py to include ClickHouse, PostgreSQL, and Celery service configurations.
 
+### Here's a simple diagram that describes the transactional outbox pattern in this solution
 
+![System Architecture Diagram](images/backend-challenge-diagram.png)
