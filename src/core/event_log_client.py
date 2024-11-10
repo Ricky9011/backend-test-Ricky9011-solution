@@ -44,10 +44,7 @@ class EventLogClient:
         finally:
             client.close()
 
-    def insert(
-        self,
-        data: list[Model],
-    ) -> None:
+    def insert(self, data: list[Model]) -> bool:
         try:
             self._client.insert(
                 data=self._convert_data(data),
@@ -55,8 +52,10 @@ class EventLogClient:
                 database=settings.CLICKHOUSE_SCHEMA,
                 table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
             )
+            return True
         except DatabaseError as e:
             logger.error('unable to insert data to clickhouse', error=str(e))
+            return False
 
     def query(self, query: str) -> Any:  # noqa: ANN401
         logger.debug('executing clickhouse query', query=query)
@@ -81,4 +80,3 @@ class EventLogClient:
     def _to_snake_case(self, event_name: str) -> str:
         result = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', event_name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', result).lower()
-
