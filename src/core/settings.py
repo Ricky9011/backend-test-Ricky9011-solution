@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -66,6 +67,19 @@ DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
 
+CELERY_BROKER_URL = env("CELERY_BROKER", default="redis://redis:6379")
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CELERY_IMPORTS = ('core.tasks',)
+
+CELERY_BEAT_SCHEDULE = {
+    'add-user-to-db-every-10-seconds': {
+        'task': 'core.tasks.add_db',  # Task name
+        'schedule': timedelta(seconds=10),  # Run every 10 seconds
+        'args': (),  # Optional: any positional args the task may need
+    },
+}
+
 CLICKHOUSE_HOST = env('CLICKHOUSE_HOST', default='clickhouse')
 CLICKHOUSE_PORT = env('CLICKHOUSE_HOST', default=8123)
 CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', default='')
@@ -109,9 +123,6 @@ STATIC_URL = env("STATIC_URL")
 STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
-CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
