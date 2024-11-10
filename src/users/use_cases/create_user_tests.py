@@ -28,7 +28,7 @@ def f_clean_up_event_log(f_ch_client: Client) -> Generator:
 @pytest.fixture
 def mock_clickhouse_client(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
     mock_client = MagicMock()
-    monkeypatch.setattr("clickhouse_connect.get_client", lambda: mock_client)
+    monkeypatch.setattr("clickhouse_connect.get_client", lambda **_: mock_client)
     return mock_client
 
 
