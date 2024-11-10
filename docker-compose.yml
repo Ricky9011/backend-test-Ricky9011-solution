@@ -3,9 +3,13 @@ services:
     build: .
     restart: always
     depends_on:
-      - db
-      - clickhouse
-    command: [ "../docker/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000" ]
+      clickhouse:
+        condition: service_started
+      db:
+        condition: service_healthy
+    command: bash -c "celery -A core worker --detach -l INFO &&
+                      celery -A core beat --detach -l INFO &&
+                      python manage.py runserver 0.0.0.0:8000"
     ports:
       - 8000:8000
     volumes:
@@ -25,6 +29,11 @@ services:
       DATABASE_USER: test_user
       DATABASE_PASSWORD: 123456
       DATABASE_NAME: test_database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "$${DATABASE_NAME}"]
+      interval: 2s
+      timeout: 20s
+      retries: 5
     ports:
       - 5432:5432
 
