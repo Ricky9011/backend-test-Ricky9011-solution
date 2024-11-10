@@ -67,7 +67,7 @@ In src/users/use_cases/create_user_tests.py, I edited test_event_log_entry_publi
 * test_process_event_outbox_success: Validates that events are successfully inserted into ClickHouse and removed from EventOutbox.
 * test_process_event_outbox_network_error: Tests error handling by simulating a network error during ClickHouse insertion.
 
-### 4. docker-compose.yml
-Updated docker-compose.yml to include ClickHouse, PostgreSQL, and Celery service configurations, enabling local development and testing with Docker.
+### 4. docker-compose.yml and settings.py
+Updated docker-compose.yml and settings.py to include ClickHouse, PostgreSQL, and Celery service configurations.
 
 
