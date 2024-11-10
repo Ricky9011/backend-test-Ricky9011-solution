@@ -1,5 +1,7 @@
 run:
-	docker compose up
+	docker compose up -d --build --remove-orphans
+restart:
+	docker compose up -d --no-deps --build app
 install:
 	make migrations
 	make migrate
@@ -16,3 +18,5 @@ lint:
 	docker compose run --rm app ruff check --fix
 test:
 	docker compose run --rm app pytest -svv
+applogs:
+	docker compose logs app
