@@ -16,13 +16,8 @@ Tech stack:
 
 ## Installation
 
-Put a `.env` file into the `src/core` directory. You can start with a template file:
-
-```
-cp src/core/.env.ci src/core/.env
-```
-
 Run the containers with
+
 ```
 make run
 ```
@@ -40,3 +35,7 @@ make install
 ## Linter
 
 `make lint`
+
+## Bash
+
+`make shell`
