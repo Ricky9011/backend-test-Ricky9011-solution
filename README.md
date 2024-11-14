@@ -12,7 +12,8 @@ This test task was cloned from [kobzevvv](https://github.com/kobzevvv/backender-
 
 All implementations and additions in this repository are contributed by [Nuray Serkali](https://github.com/nuray0) for the purpose of completing the assigned task. 
 
-You can find the documentation about the implemention and a diagram in this [doc](docs/implementation_details.md).
+You can find the documentation about the implemention and a diagram by clicking this link: 
+* [doc](docs/implementation_details.md).
 
 
 ## Installation
