@@ -29,7 +29,7 @@ In src/users/use_cases/create_user_tests.py, I edited test_event_log_entry_publi
 Updated docker-compose.yml and settings.py to include ClickHouse, PostgreSQL, and Celery service configurations.
 
 
-## Corrections after 1'st review
+## Corrections after the 1'st review
 
 * Deleted "- pip install redis" from Dockerfile
 * Replaced hard-coded redis urls with environmental values
