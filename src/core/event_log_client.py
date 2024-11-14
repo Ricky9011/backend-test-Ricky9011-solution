@@ -64,7 +64,6 @@ class EventLogClient:
         except DatabaseError as e:
             logger.error('unable to save event to outbox', error=str(e))
 
-
     def query(self, query: str) -> Any:  # noqa: ANN401
         logger.debug('executing clickhouse query', query=query)
 

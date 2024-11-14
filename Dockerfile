@@ -14,8 +14,6 @@ ARG BUILD_DEPS="\
 
 WORKDIR /srv/app/
 
-ENV PYTHONPATH="${PYTHONPATH}:/srv/app"
-
 RUN apt-get -qq update \
     && apt-get -qqy --no-install-recommends install $BUILD_DEPS $RUNTIME_DEPS \
     && apt-get -qy upgrade \
@@ -24,12 +22,8 @@ RUN apt-get -qq update \
 
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
-RUN pip install redis
 
 COPY . .
-
-# Set environment variables
-ENV CELERY_BROKER_URL=redis://localhost:6379/0
 
 # Run Celery worker (this is the command that runs Celery)
 CMD ["celery", "-A", "core", "worker", "--loglevel=info"]

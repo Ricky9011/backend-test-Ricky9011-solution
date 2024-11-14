@@ -10,8 +10,8 @@ app = Celery('core')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
 app.conf.update(
-    CELERY_BROKER_URL='redis://localhost:6379/0',  # Redis connection string
-    CELERY_RESULT_BACKEND='redis://localhost:6379/0',
+    CELERY_BROKER_URL=settings.CELERY_BROKER_URL,
+    CELERY_RESULT_BACKEND=settings.CELERY_RESULT_BACKEND,
 )
 
 
