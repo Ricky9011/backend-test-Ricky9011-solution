@@ -41,5 +41,5 @@ Updated docker-compose.yml and settings.py to include ClickHouse, PostgreSQL, an
 
 ### Here's a simple diagram that describes the transactional outbox pattern in this solution
 
-![System Architecture Diagram](images/backend-challenge-diagram.png)
+![System Architecture Diagram](../images/backend-challenge-diagram.png)
 
