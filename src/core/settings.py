@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
     # project apps
     'users',
+    'logs',
 ]
 
 MIDDLEWARE = [
@@ -118,7 +119,7 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = env("TIME_ZONE", default="Europe/Moscow")
 USE_I18N = True
-USE_TZ = True
+USE_TZ = False
 
 MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = env("MEDIA_ROOT")
