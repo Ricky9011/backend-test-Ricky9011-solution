@@ -1,10 +1,12 @@
 from typing import Any
 
 import structlog
+from django.db import transaction
 
 from core.base_model import Model
 from core.event_log_client import EventLogClient
 from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
+from events.use_cases.create_events_log import CreateEventLog, CreateEventLogRequest
 from users.models import User
 
 logger = structlog.get_logger(__name__)
@@ -28,13 +30,14 @@ class CreateUserResponse(UseCaseResponse):
 
 
 class CreateUser(UseCase):
-    def _get_context_vars(self, request: UseCaseRequest) -> dict[str, Any]:
+    def _get_context_vars(self, request: CreateUserRequest) -> dict[str, Any]:
         return {
             'email': request.email,
             'first_name': request.first_name,
             'last_name': request.last_name,
         }
-
+    
+    @transaction.atomic()
     def _execute(self, request: CreateUserRequest) -> CreateUserResponse:
         logger.info('creating a new user')
 
@@ -47,21 +50,17 @@ class CreateUser(UseCase):
 
         if created:
             logger.info('user has been created')
-            self._log(user)
+            event_log_request = CreateEventLogRequest(event=self._make_event(user))
+            CreateEventLog().execute(event_log_request)
             return CreateUserResponse(result=user)
 
         logger.error('unable to create a new user')
         return CreateUserResponse(error='User with this email already exists')
-
-    def _log(self, user: User) -> None:
-        with EventLogClient.init() as client:
-            client.insert(
-                data=[
-                    UserCreated(
-                        email=user.email,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                    ),
-                ],
-            )
+    
+    def _make_event(self, user: User) -> UserCreated:
+        return UserCreated(
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+        )
 

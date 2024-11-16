@@ -4,6 +4,7 @@ from pathlib import Path
 import environ
 import sentry_sdk
 import structlog
+from celery.schedules import crontab
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -27,9 +28,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # third party
+    'django_celery_beat',
 
     # project apps
     'users',
+    'events',
 ]
 
 MIDDLEWARE = [
@@ -184,3 +189,13 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         ],
         default_integrations=False,
     )
+
+# celery
+CELERY_BROKER_URL = env('CELERY_BROKER')
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_BEAT_SCHEDULE = {
+    "push_log_events_to_clickhouse": {
+        "task": "events.push_log_events_to_clickhouse",
+        "schedule": crontab(minute='10'),
+    },
+}
