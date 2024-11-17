@@ -15,6 +15,26 @@ services:
       - app_media_files:/srv/app/media:rw
       - .:/srv/app
 
+  celery:
+    build: .
+    depends_on:
+      - db
+      - redis
+      - clickhouse
+    command: ['celery', '-A', 'core.celery_app', 'worker', '-l', 'info']
+    volumes:
+      - .:/srv/app
+
+  celery-beat:
+    build: .
+    depends_on:
+      - db
+      - redis
+      - clickhouse
+    command: ['celery', '-A', 'core.celery_app', 'beat', '-l', 'info']
+    volumes:
+      - .:/srv/app
+
   db:
     tty: true
     image: postgres:16-alpine
@@ -28,7 +48,7 @@ services:
       DATABASE_PASSWORD: 123456
       DATABASE_NAME: test_database
     ports:
-      - 5432:5432
+      - 5433:5432
 
   redis:
     image: redis:6-alpine

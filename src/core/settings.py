@@ -77,6 +77,8 @@ CLICKHOUSE_URI = (
     f'{CLICKHOUSE_PROTOCOL}'
 )
 CLICKHOUSE_EVENT_LOG_TABLE_NAME = 'event_log'
+CLICKHOUSE_BATCH_SIZE = 10000
+CLICKHOUSE_BATCH_INSERTION_TIMEOUT = 10
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -110,8 +112,23 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+REDIS_HOST = env("REDIS_HOST", default="localhost")
+REDIS_PORT = env("REDIS_PORT", default=6379)
+REDIS_DB = env("REDIS_DB", default=0)
+
+CELERY_BROKER = env("CELERY_BROKER", default=f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
+
+CELERY_BEAT_SCHEDULE = {
+    'log_batch_events': {
+        'task': 'users.tasks.log_batch_events',
+        'schedule': 5
+    },
+    'log_failed_events': {
+        'task': 'users.tasks.log_failed_events',
+        'schedule': 60
+    }
+}
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")

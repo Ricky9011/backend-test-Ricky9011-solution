@@ -1,5 +1,7 @@
 run:
-	docker compose up
+	docker compose up -d
+stop:
+	docker compose down
 install:
 	make migrations
 	make migrate
