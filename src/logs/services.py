@@ -13,7 +13,10 @@ def process_logs(batch_size=100) -> int:
             logger.info("No logs to process", transaction_id=transaction.trace_id)
             return 0
         
-        logger.info("Processing logs", transaction_id=transaction.trace_id, log_count=len(logs))
+        logger.info("Processing logs",
+                    transaction_id=transaction.trace_id,
+                    log_count=len(logs)
+                    )
         
         data_to_insert = []
         for log in logs:
@@ -43,5 +46,8 @@ def process_logs(batch_size=100) -> int:
                 return len(data_to_insert)                
             except Exception as e:
                 capture_exception(e)
-                logger.error("Error processing logs", transaction_id=transaction.trace_id, error=str(e))
+                logger.error("Error processing logs", 
+                            transaction_id=transaction.trace_id, 
+                            error=str(e)
+                            )
                 raise
