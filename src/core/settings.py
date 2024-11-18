@@ -187,6 +187,8 @@ structlog.configure(
 SENTRY_SETTINGS = {
     "dsn": env("SENTRY_CONFIG_DSN"),
     "environment": env("SENTRY_CONFIG_ENVIRONMENT"),
+    "traces_sample_rate": env("SENTRY_TRACES_SAMPLE_RATE"),
+    "profile_sample_rate": env("SENTRY_PROFILE_SAMPLE_RATE"),
 }
 
 if SENTRY_SETTINGS.get("dsn") and not DEBUG:
@@ -194,8 +196,15 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         dsn=SENTRY_SETTINGS["dsn"],
         environment=SENTRY_SETTINGS["environment"],
         integrations=[
-            sentry_sdk.DjangoIntegration(),
-            sentry_sdk.CeleryIntegration(),
+            sentry_sdk.DjangoIntegration(
+                transaction_style="function_name",
+                middleware_spans=True,
+            ),
+            sentry_sdk.CeleryIntegration(
+                monitor_beat_tasks=True,
+            ),
         ],
         default_integrations=False,
+        traces_sample_rate=SENTRY_SETTINGS["traces_sample_rate"],
+        profile_sample_rate=SENTRY_SETTINGS["profile_sample_rate"],
     )

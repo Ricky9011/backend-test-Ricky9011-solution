@@ -57,8 +57,10 @@ class EventPublisher:
         for db_event in db_events:
             db_event.is_sent = True
         EventOutbox.objects.bulk_update(db_events, ['is_sent'])
+        logger.info('events marked as sent')
 
     @classmethod
     def _insert_events(cls, events: list[PublishedEvent]) -> None:
+        logger.info(f'try to insert events {events}, to the client {cls.EVENT_CLIENT}')
         with cls.EVENT_CLIENT.init() as client:
             client.insert(events)
