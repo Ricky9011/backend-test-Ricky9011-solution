@@ -3,7 +3,7 @@ from typing import Any
 import structlog
 
 from core.base_model import Model
-from core.event_log_client import EventLogClient
+from outbox.transactional_outbox import TransactionalOutbox
 from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
 from users.models import User
 
@@ -35,9 +35,7 @@ class CreateUser(UseCase):
             'last_name': request.last_name,
         }
 
-    def _execute(self, request: CreateUserRequest) -> CreateUserResponse:
-        logger.info('creating a new user')
-
+    def _create_user_logic(self, request: CreateUserRequest):
         user, created = User.objects.get_or_create(
             email=request.email,
             defaults={
@@ -46,22 +44,30 @@ class CreateUser(UseCase):
         )
 
         if created:
-            logger.info('user has been created')
-            self._log(user)
-            return CreateUserResponse(result=user)
+            logger.info("User created successfully", user_id=user.id)
+            return user
 
-        logger.error('unable to create a new user')
-        return CreateUserResponse(error='User with this email already exists')
+        raise ValueError("User with this email already exists")
 
-    def _log(self, user: User) -> None:
-        with EventLogClient.init() as client:
-            client.insert(
-                data=[
-                    UserCreated(
-                        email=user.email,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                    ),
-                ],
+    def _execute(self, request: CreateUserRequest) -> CreateUserResponse:
+        logger.info('creating a new user')
+
+        try:
+            user = TransactionalOutbox.execute_with_event(
+                event_type="UserCreated",
+                event_payload={
+                    "email": request.email,
+                    "first_name": request.first_name,
+                    "last_name": request.last_name,
+                },
+                func=self._create_user_logic,
+                request=request,
             )
+            return CreateUserResponse(result=user)
+        except ValueError as e:
+            logger.warning("User already exists", email=request.email)
+            return CreateUserResponse(error=str(e))
+        except Exception as e:
+            logger.error("Unexpected error during user creation", exc_info=e)
+            return CreateUserResponse(error="Unexpected error occurred")
 
