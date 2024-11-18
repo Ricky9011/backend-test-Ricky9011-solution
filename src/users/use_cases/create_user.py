@@ -5,7 +5,7 @@ from django.db import transaction
 
 from core.base_model import Model
 from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
-from events.use_cases.create_event import CreateEvent
+from events.use_cases.create_event import CreateEvent, CreateEventRequest
 from users.models import User
 
 logger = structlog.get_logger(__name__)
@@ -61,4 +61,4 @@ class CreateUser(UseCase):
             first_name=user.first_name,
             last_name=user.last_name,
         )
-        CreateEvent([user_model]).create()
+        CreateEvent().execute(CreateEventRequest(raw_data=[user_model]))

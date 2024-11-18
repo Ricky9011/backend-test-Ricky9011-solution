@@ -1,3 +1,4 @@
+import datetime as dt
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any, Protocol
@@ -8,6 +9,7 @@ from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
 
 from core.base_model import Model
+from events.publisher import PublishedEvent
 
 logger = structlog.get_logger(__name__)
 
@@ -59,11 +61,11 @@ class EventLogClient(EventLogClientProtocol):
 
     def insert(
         self,
-        data: list[Model],
+        data: list[PublishedEvent],
     ) -> None:
         try:
             self._client.insert(
-                data=data,
+                data=self._convert_data(data),
                 column_names=EVENT_LOG_COLUMNS,
                 database=settings.CLICKHOUSE_SCHEMA,
                 table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
@@ -81,3 +83,13 @@ class EventLogClient(EventLogClientProtocol):
             logger.error('failed to execute clickhouse query', error=str(e))
             return
 
+    def _convert_data(self, data: list[PublishedEvent]) -> list[tuple[str, dt.datetime, str, str]]:
+            return [
+                (
+                    event.event_type,
+                    event.event_date_time,
+                    event.environment,
+                    event.event_context,
+                )
+                for event in data
+            ]

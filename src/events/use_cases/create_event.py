@@ -5,7 +5,7 @@ from django.conf import settings
 from django.db import DatabaseError
 
 from core.base_model import Model
-from core.use_case import UseCase, UseCaseRequest
+from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
 from events.models import EventOutbox
 
 logger = structlog.get_logger(__name__)
@@ -23,8 +23,12 @@ class CreateEventRequestData(Model):
     event_context: str
 
 
-class CreateEventRequest(UseCaseRequest):
+class ProcessedEventRequest(UseCaseRequest):
     events_data: list[CreateEventRequestData]
+
+
+class CreateEventRequest(UseCaseRequest):
+    raw_data: list[Model]
 
 
 class CreateEvent(UseCase):
@@ -39,10 +43,7 @@ class CreateEvent(UseCase):
     who execute CreateEvent for db consistency therefore it just raises db exception without any processing
     """
 
-    def __init__(self, event_objects: list[Model]) -> None:
-        self._event_objects = event_objects
-
-    def _execute(self, request: CreateEventRequest) -> None:
+    def _execute(self, request: ProcessedEventRequest) -> None:
         logger.info('creating a new event')
 
         events = [EventOutbox(
@@ -56,21 +57,22 @@ class CreateEvent(UseCase):
             logger.error('unable to create a new event')
             raise
 
-    def _convert_event_objects_to_request(self) -> CreateEventRequest:
-        return CreateEventRequest(events_data=[
+    def _convert_event_objects_to_request(self, request: CreateEventRequest) -> ProcessedEventRequest:
+        return ProcessedEventRequest(events_data=[
             CreateEventRequestData(
                 event_type=self._to_snake_case(event_object.__class__.__name__),
                 environment=settings.ENVIRONMENT,
                 event_context=event_object.model_dump_json(),
             )
-            for event_object in self._event_objects
+            for event_object in request.raw_data
         ])
 
     def _to_snake_case(self, event_name: str) -> str:
         result = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', event_name)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', result).lower()
 
-    def create(self) -> None:
-        request = self._convert_event_objects_to_request()
-        return self._execute(request)
+    def execute(self, request: CreateEventRequest) -> UseCaseResponse:
+        processed_request = self._convert_event_objects_to_request(request)
+        self._execute(processed_request)
+        return UseCaseResponse()
 

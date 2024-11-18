@@ -5,7 +5,6 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from core.base_model import Model
-from core.event_log_client import EventLogClient, EventLogClientProtocol
 from events.models import EventOutbox
 
 logger = structlog.get_logger(__name__)
@@ -23,10 +22,7 @@ class EventPublisher:
 
     Retrieve all not sent events from event outbox, then try to send them
     right to the storage with mark events as sent if succeed
-
-    Setup event client with class attribute EVENT_CLIENT for any client swapping in the future
     """
-    EVENT_CLIENT: EventLogClientProtocol = EventLogClient
 
     @classmethod
     @transaction.atomic()
@@ -61,6 +57,7 @@ class EventPublisher:
 
     @classmethod
     def _insert_events(cls, events: list[PublishedEvent]) -> None:
-        logger.info(f'try to insert events {events}, to the client {cls.EVENT_CLIENT}')
-        with cls.EVENT_CLIENT.init() as client:
+        from core.event_log_client import EventLogClient
+        with EventLogClient.init() as client:
+            logger.info(f'try to insert events {events}, to the client {client}')
             client.insert(events)
