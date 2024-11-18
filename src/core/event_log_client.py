@@ -1,6 +1,6 @@
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Protocol
 
 import clickhouse_connect
 import structlog
@@ -19,7 +19,22 @@ EVENT_LOG_COLUMNS = [
 ]
 
 
-class EventLogClient:
+class EventLogClientProtocol(Protocol):
+    """Base event log protocol for any future Clickhouse replacing"""
+
+    @classmethod
+    @contextmanager
+    def init(cls) -> Generator['EventLogClientProtocol']:
+        raise NotImplementedError()
+
+    def insert(self, data: Any) -> None:
+        raise NotImplementedError()
+
+    def query(self, query: str) -> Any:
+        raise NotImplementedError()
+
+
+class EventLogClient(EventLogClientProtocol):
     def __init__(self, client: clickhouse_connect.driver.Client) -> None:
         self._client = client
 
@@ -55,6 +70,7 @@ class EventLogClient:
             )
         except DatabaseError as e:
             logger.error('unable to insert data to clickhouse', error=str(e))
+            raise
 
     def query(self, query: str) -> Any:  # noqa: ANN401
         logger.debug('executing clickhouse query', query=query)

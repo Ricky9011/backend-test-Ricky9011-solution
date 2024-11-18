@@ -61,4 +61,4 @@ class CreateUser(UseCase):
             first_name=user.first_name,
             last_name=user.last_name,
         )
-        CreateEvent(user_model).create()
+        CreateEvent([user_model]).create()
