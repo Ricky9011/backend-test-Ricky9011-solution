@@ -10,7 +10,7 @@ class TimeStampedModel(models.Model):
         abstract = True
 
     def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None, # noqa
+        self, force_insert=False, force_update=False, using=None, update_fields=None,  # noqa
     ) -> None:
         # https://docs.djangoproject.com/en/5.1/ref/models/fields/#django.db.models.DateField.auto_now
         self.updated_at = timezone.now()
@@ -21,3 +21,28 @@ class TimeStampedModel(models.Model):
             update_fields.add('updated_at')
 
         super().save(force_insert, force_update, using, update_fields)
+
+
+class EventLogOutbox(models.Model):
+    """
+        Модель для хранения событий в таблице Outbox.
+
+        Поля:
+            - id: Уникальный идентификатор записи.
+            - event_type: Тип события (например, 'user_created').
+            - event_date_time: Дата и время события.
+            - environment: Окружение приложения (например, 'production').
+            - event_context: Контекст события в формате JSON.
+            - metadata_version: Версия метаданных события.
+            - processed: Указывает, было ли событие обработано и отправлено.
+    """
+    id = models.BigAutoField(primary_key=True)
+    event_type = models.CharField(max_length=255)
+    event_date_time = models.DateTimeField(default=timezone.now)
+    environment = models.CharField(max_length=50)
+    event_context = models.JSONField()
+    metadata_version = models.PositiveIntegerField(default=1)
+    processed = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'event_log_outbox'

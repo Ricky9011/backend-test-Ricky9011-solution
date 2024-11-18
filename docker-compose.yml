@@ -37,6 +37,26 @@ services:
     ports:
       - 6379:6379
 
+  celery:
+    build: .
+    command: celery -A core worker --loglevel=info
+    depends_on:
+      - app
+      - db
+      - redis
+    volumes:
+      - .:/srv/app
+
+  celery_beat:
+    build: .
+    command: celery -A core beat --loglevel=info
+    depends_on:
+      - app
+      - db
+      - redis
+    volumes:
+      - .:/srv/app
+
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
     ports:
@@ -46,6 +66,6 @@ services:
 
 
 volumes:
-  dev-db-data: {}
+  dev-db-data: { }
   app_media_files: { }
   app_static_files: { }
