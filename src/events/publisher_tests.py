@@ -1,13 +1,12 @@
 from collections.abc import Generator
 
 import pytest
+import structlog
 from clickhouse_connect.driver import Client
 from django.conf import settings
-import structlog
 
 from events.models import EventOutbox
 from events.publisher import EventPublisher
-
 
 logger = structlog.get_logger(__name__)
 

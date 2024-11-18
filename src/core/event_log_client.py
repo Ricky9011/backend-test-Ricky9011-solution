@@ -8,7 +8,6 @@ import structlog
 from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
 
-from core.base_model import Model
 from events.publisher import PublishedEvent
 
 logger = structlog.get_logger(__name__)

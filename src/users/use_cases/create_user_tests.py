@@ -2,8 +2,8 @@ import uuid
 
 import pytest
 
-from users.use_cases import CreateUser, CreateUserRequest, UserCreated
 from events.models import EventOutbox
+from users.use_cases import CreateUser, CreateUserRequest, UserCreated
 
 pytestmark = [pytest.mark.django_db]
 

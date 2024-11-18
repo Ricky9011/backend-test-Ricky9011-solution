@@ -1,8 +1,8 @@
 import pytest
 
+from events.models import EventOutbox
 from events.use_cases.create_event import CreateEvent, CreateEventRequest
 from users.use_cases import UserCreated
-from events.models import EventOutbox
 
 pytestmark = [pytest.mark.django_db]
 
