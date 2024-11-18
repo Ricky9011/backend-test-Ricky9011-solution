@@ -1,6 +1,6 @@
 import pytest
-from src.core.models import EventLogOutbox
-from src.core.services import EventLogService
+from core.models import EventLogOutbox
+from core.services import EventLogService
 from clickhouse_connect import get_client
 from django.conf import settings
 from django.utils import timezone

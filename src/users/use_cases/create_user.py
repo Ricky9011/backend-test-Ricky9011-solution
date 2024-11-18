@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 from users.models import User
 
-from src.core.models import EventLogOutbox
+from core.models import EventLogOutbox
 
 logger = structlog.get_logger(__name__)
 

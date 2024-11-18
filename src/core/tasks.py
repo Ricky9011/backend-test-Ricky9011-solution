@@ -1,7 +1,7 @@
 from celery import shared_task
 import structlog
 
-from src.core.services import EventLogService
+from core.services import EventLogService
 
 logger = structlog.get_logger(__name__)
 

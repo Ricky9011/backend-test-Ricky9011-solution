@@ -110,3 +110,4 @@ Architecture diagram:
 
 
 Instructions on how to start the project can be found in README.md
+

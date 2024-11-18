@@ -16,3 +16,5 @@ lint:
 	docker compose run --rm app ruff check --fix
 test:
 	docker compose run --rm app pytest -svv
+
+

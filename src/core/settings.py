@@ -28,8 +28,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    # project apps
     'users',
+    'core'
 ]
 
 MIDDLEWARE = [
@@ -65,9 +65,11 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
+print("DATABASES:", DATABASES)
+
 
 CLICKHOUSE_HOST = env('CLICKHOUSE_HOST', default='clickhouse')
-CLICKHOUSE_PORT = env('CLICKHOUSE_HOST', default=8123)
+CLICKHOUSE_PORT = env('CLICKHOUSE_PORT', default=8123)
 CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', default='')
 CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', default='')
 CLICKHOUSE_SCHEMA = os.getenv('CLICKHOUSE_SCHEMA', default='default')
@@ -185,6 +187,7 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         default_integrations=False,
     )
 
+CELERY_ALWAYS_EAGER = True
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://redis:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://redis:6379/0')
 CELERY_BEAT_SCHEDULE = {

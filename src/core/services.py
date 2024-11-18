@@ -1,8 +1,10 @@
-from src.core.models import EventLogOutbox
-from src.core.event_log_client import EventLogClient
+from core.models import EventLogOutbox
+from core.event_log_client import EventLogClient
+from django.conf import settings
 from django.db import transaction
 import structlog
-import json
+
+from core.models import EventLog
 
 logger = structlog.get_logger(__name__)
 
@@ -31,6 +33,7 @@ class EventLogService:
 
         with transaction.atomic():
             logs = list(EventLogOutbox.objects.filter(processed=False)[:batch_size])
+            logger.info(f"Found {len(logs)} unprocessed logs")
 
             if not logs:
                 logger.info('No logs to send')
@@ -38,19 +41,24 @@ class EventLogService:
 
             data = []
             for log in logs:
-                data.append({
-                    'event_type': log.event_type,
-                    'event_date_time': log.event_date_time,
-                    'environment': log.environment,
-                    'event_context': json.dumps(log.event_context),
-                    'metadata_version': log.metadata_version,
-                })
+                event = EventLog(
+                    event_type=log.event_type,
+                    event_date_time=log.event_date_time,
+                    environment=log.environment,
+                    event_context=log.event_context,
+                    metadata_version=log.metadata_version
+                )
+                data.append(event)
+
+            logger.info(f"Prepared data for ClickHouse insertion: {data}")
 
             try:
                 with EventLogClient.init() as client:
+                    logger.info(f"Initialized EventLogClient with settings: host={settings.CLICKHOUSE_HOST}, port={settings.CLICKHOUSE_PORT}")
                     client.insert(data=data)
+                    logger.info("Data successfully inserted into ClickHouse")
             except Exception as e:
-                logger.error('Failed to send logs to ClickHouse', error=str(e))
+                logger.error('Failed to send logs to ClickHouse', error=str(e), exc_info=True)
                 return
 
             EventLogOutbox.objects.filter(id__in=[log.id for log in logs]).update(processed=True)
