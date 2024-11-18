@@ -44,6 +44,26 @@ services:
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  celery:
+      build: .
+      depends_on:
+        - db
+        - redis
+        - clickhouse
+      command: celery -A core worker -l INFO -Q periodic
+      volumes:
+        - .:/app
+
+  celery_beat:
+    build: .
+    depends_on:
+      - db
+      - redis
+      - clickhouse
+    command: celery -A core beat
+    volumes:
+      - .:/app
+
 
 volumes:
   dev-db-data: {}
