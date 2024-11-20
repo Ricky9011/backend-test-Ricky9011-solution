@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "core.settings"
+DJANGO_SETTINGS_MODULE = "src.core.settings"
 env = [
     "DEBUG = true",
     "CELERY_ALWAYS_EAGER = on",
@@ -45,7 +45,7 @@ lint.exclude = [
     '.ruff_cache',
     '__pycache__',
     'src/core/celery.py',
-    'src/manage.py',
+    'manage.py',
 ]
 
 lint.fixable = ["ALL"]
@@ -53,7 +53,7 @@ lint.fixable = ["ALL"]
 # Allow unused variables when underscore-prefixed.
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 4

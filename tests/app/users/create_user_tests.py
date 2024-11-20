@@ -6,9 +6,7 @@ import pytest
 from clickhouse_connect.driver import Client
 from django.conf import settings
 
-from users.use_cases import CreateUser, CreateUserRequest, UserCreated
-
-pytestmark = [pytest.mark.django_db]
+from src.users.use_cases import CreateUser, CreateUserRequest, UserCreated
 
 
 @pytest.fixture()

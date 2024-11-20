@@ -9,9 +9,9 @@ env = environ.Env(
     DEBUG=(bool, False),
 )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, "core/.env"))  # noqa: PTH118
+environ.Env.read_env(os.path.join(BASE_DIR, "src/core/.env"))  # noqa: PTH118
 
 DEBUG = env.bool("DEBUG", default=False)
 ENVIRONMENT = env('ENVIRONMENT', default='Local')
@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # project apps
-    'users',
+    'src.users',
 ]
 
 MIDDLEWARE = [
@@ -42,7 +42,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = 'src.core.urls'
 
 TEMPLATES = [
     {
@@ -60,14 +60,14 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = 'src.core.wsgi.application'
 
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
 
 CLICKHOUSE_HOST = env('CLICKHOUSE_HOST', default='clickhouse')
-CLICKHOUSE_PORT = env('CLICKHOUSE_HOST', default=8123)
+CLICKHOUSE_PORT = env('CLICKHOUSE_PORT', default=8123)
 CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', default='')
 CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', default='')
 CLICKHOUSE_SCHEMA = os.getenv('CLICKHOUSE_SCHEMA', default='default')
@@ -179,8 +179,8 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         dsn=SENTRY_SETTINGS["dsn"],
         environment=SENTRY_SETTINGS["environment"],
         integrations=[
-            sentry_sdk.DjangoIntegration(),
-            sentry_sdk.CeleryIntegration(),
+            sentry_sdk.integrations.DjangoIntegration(),
+            sentry_sdk.integrations.CeleryIntegration(),
         ],
         default_integrations=False,
     )

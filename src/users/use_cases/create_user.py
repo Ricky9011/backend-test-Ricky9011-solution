@@ -2,10 +2,10 @@ from typing import Any
 
 import structlog
 
-from core.base_model import Model
-from core.event_log_client import EventLogClient
-from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
-from users.models import User
+from src.core.base_model import Model
+from src.core.event_log_client import EventLogClient
+from src.core.use_case import UseCase, UseCaseRequest, UseCaseResponse
+from src.users.models import User
 
 logger = structlog.get_logger(__name__)
 

@@ -9,7 +9,7 @@ from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
 from django.utils import timezone
 
-from core.base_model import Model
+from src.core.base_model import Model
 
 logger = structlog.get_logger(__name__)
 
