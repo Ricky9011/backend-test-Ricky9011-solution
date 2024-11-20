@@ -1,9 +1,14 @@
 services:
   app:
-    build: .
+    image: backender-challenge
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: always
     depends_on:
       - db
+      - redis
       - clickhouse
     command: [ "./docker/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000" ]
     ports:
@@ -34,6 +39,8 @@ services:
       - default
     ports:
       - 6379:6379
+    volumes:
+      - redis-data:/data
 
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
@@ -42,8 +49,32 @@ services:
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  celery-worker:
+    image: backender-challenge
+    pull_policy: never
+    command:
+      - /bin/sh
+      - -c
+      - celery -A src.core.celery.app worker -c 1 -l INFO -Q celery,outbox
+    volumes:
+      - .:/srv/app
+    depends_on:
+      - redis
+
+  celery-beat:
+    image: backender-challenge
+    pull_policy: never
+    command:
+      - /bin/sh
+      - -c
+      - celery -A src.core.celery.app beat -l INFO
+    volumes:
+      - .:/srv/app
+    depends_on:
+      - redis
 
 volumes:
-  dev-db-data: { }
-  app_media_files: { }
-  app_static_files: { }
+  dev-db-data: {}
+  redis-data: {}
+  app_media_files: {}
+  app_static_files: {}

@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+import structlog
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
@@ -8,6 +9,8 @@ from pydantic import BaseModel
 from src.common.utils import to_snake_case
 from src.logs.ch_client import ClickHouseClient
 from src.logs.models import OutboxLog
+
+logger = structlog.get_logger(__name__)
 
 
 class OutboxLogger:
@@ -38,6 +41,7 @@ class OutboxExporter:
                     .order_by("id")[: settings.CLICKHOUSE_BATCH_SIZE]
                 )
                 if not objs:
+                    logger.info("no data to export, exiting")
                     return
 
                 data = cls._convert_data(objs)
@@ -45,6 +49,8 @@ class OutboxExporter:
                 client: ClickHouseClient
                 with ClickHouseClient.init() as client:
                     client.insert(data)
+
+                logger.info("inserted data to clickhouse", count=len(data))
 
                 OutboxLog.objects.filter(id__in=[obj.id for obj in objs]).update(
                     exported_at=timezone.now(),
@@ -68,4 +74,5 @@ class OutboxExporter:
     @staticmethod
     def cleanup() -> None:
         bound = timezone.now() - timedelta(seconds=settings.CLICKHOUSE_CLEANUP_INTERVAL)
-        OutboxLog.objects.filter(exported_at__lt=bound).delete()
+        count, _ = OutboxLog.objects.filter(exported_at__lt=bound).delete()
+        logger.info("deleted exported outbox logs", count=count)
