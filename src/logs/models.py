@@ -1,10 +1,25 @@
 from django.db import models
+from django.db.models import Q
+
+from src.common.models import UUIDModel
 
 
-class OutboxLog(models.Model):
+class OutboxLog(UUIDModel):
     class Meta:
         verbose_name = "Outbox Log"
         verbose_name_plural = "Outbox Logs"
+        indexes = [
+            models.Index(
+                fields=["exported_at"],
+                condition=Q(exported_at__isnull=True),
+                name="exported_at_nullable_idx",
+            ),
+            models.Index(
+                fields=["exported_at"],
+                condition=Q(exported_at__isnull=False),
+                name="exported_at_idx",
+            ),
+        ]
 
     event_type = models.CharField(max_length=255, verbose_name="Event Type")
     event_date_time = models.DateTimeField(verbose_name="Event Date Time")

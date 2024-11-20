@@ -3,7 +3,7 @@ from typing import Any, Protocol
 import structlog
 from django.db import transaction
 
-from src.common.model import PydanticModel
+from src.common.models import PydanticModel
 
 
 class UseCaseRequest(PydanticModel):

@@ -8,8 +8,6 @@ import structlog
 from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
 
-from src.logs.models import OutboxLog
-
 logger = structlog.get_logger(__name__)
 
 EVENT_LOG_COLUMNS = [
@@ -44,10 +42,10 @@ class ClickHouseClient:
         finally:
             client.close()
 
-    def insert(self, data: list[OutboxLog]) -> None:
+    def insert(self, data: list[tuple[str, datetime, str, str, int]]) -> None:
         try:
             self._client.insert(
-                data=self._convert_data(data),
+                data=data,
                 column_names=EVENT_LOG_COLUMNS,
                 database=settings.CLICKHOUSE_SCHEMA,
                 table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
@@ -63,18 +61,3 @@ class ClickHouseClient:
         except DatabaseError as e:
             logger.error("failed to execute clickhouse query", error=str(e))
             return
-
-    def _convert_data(
-        self,
-        data: list[OutboxLog],
-    ) -> list[tuple[str, datetime, str, dict[str, Any], int]]:
-        return [
-            (
-                event.event_type,
-                event.event_date_time,
-                event.environment,
-                event.event_context,
-                event.metadata_version,
-            )
-            for event in data
-        ]

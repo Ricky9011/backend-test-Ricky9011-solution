@@ -3,7 +3,7 @@ from typing import Any
 import structlog
 from django.db import transaction
 
-from src.common.model import PydanticModel
+from src.common.models import PydanticModel
 from src.common.use_case import UseCase, UseCaseRequest, UseCaseResponse
 from src.logs.outbox import OutboxLogger
 from src.users.models import User

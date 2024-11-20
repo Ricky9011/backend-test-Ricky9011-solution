@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
 
-from src.core.models import TimeStampedModel
+from src.common.models import TimeStampedModel
 
 
 class User(TimeStampedModel, AbstractBaseUser):

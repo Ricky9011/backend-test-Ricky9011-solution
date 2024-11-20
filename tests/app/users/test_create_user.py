@@ -1,13 +1,8 @@
 import json
-import uuid
-from unittest.mock import ANY
-
-import pytest
-from clickhouse_connect.driver import Client
 
 from src.logs.models import OutboxLog
 from src.users.models import User
-from src.users.use_cases import CreateUser, CreateUserRequest, UserCreated
+from src.users.use_cases import CreateUser, CreateUserRequest
 
 
 class TestUserCreated:
@@ -60,35 +55,3 @@ class TestUserCreated:
         assert User.objects.get() == user_test_testovich
 
         assert OutboxLog.objects.count() == 0
-
-
-@pytest.mark.skip
-def test_event_log_entry_published(
-    create_user_uc: CreateUser,
-    ch_client: Client,
-) -> None:
-    email = f"test_{uuid.uuid4()}@email.com"
-    request = CreateUserRequest(
-        email=email,
-        first_name="Test",
-        last_name="Testovich",
-    )
-
-    create_user_uc.execute(request)
-    log = ch_client.query(
-        "SELECT * FROM default.event_log WHERE event_type = 'user_created'",
-    )
-
-    assert log.result_rows == [
-        (
-            "user_created",
-            ANY,
-            "Local",
-            UserCreated(
-                email=email,
-                first_name="Test",
-                last_name="Testovich",
-            ).model_dump_json(),
-            1,
-        ),
-    ]

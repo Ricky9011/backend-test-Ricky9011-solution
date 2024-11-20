@@ -4,7 +4,7 @@ env = [
     "DEBUG = true",
     "CELERY_ALWAYS_EAGER = on",
 ]
-python_files = "*_tests.py tests/test_*.py"
+python_files = "*_tests.py test_*.py"
 addopts = "-vrs -r fE --tb=short --reuse-db --no-migrations --disable-warnings -p no:warnings"
 
 [tool.ruff]
@@ -12,6 +12,7 @@ line-length = 120
 lint.ignore = [
     'ANN101',
     'ANN102',
+    'ARG002',
     'Q000',
     'S101',
 ]

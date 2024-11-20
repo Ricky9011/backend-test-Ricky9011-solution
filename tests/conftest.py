@@ -6,6 +6,7 @@ from clickhouse_connect.driver import Client
 from django.conf import settings
 
 pytest_plugins = [
+    "tests.fixtures.logs.outbox",
     "tests.fixtures.users.request",
     "tests.fixtures.users.use_case",
     "tests.fixtures.users.users",
