@@ -4,7 +4,7 @@ from functools import cached_property
 from pydantic import BaseModel
 
 
-class Model(BaseModel):
+class PydanticModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {

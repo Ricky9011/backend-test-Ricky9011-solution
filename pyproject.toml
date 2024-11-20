@@ -57,3 +57,6 @@ target-version = "py313"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 4
+
+[tool.black]
+exclude = "/venv/|.*/migrations/"

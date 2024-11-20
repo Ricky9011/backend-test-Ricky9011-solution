@@ -3,16 +3,16 @@ from typing import Any, Protocol
 import structlog
 from django.db import transaction
 
-from src.core.base_model import Model
+from src.common.model import PydanticModel
 
 
-class UseCaseRequest(Model):
+class UseCaseRequest(PydanticModel):
     pass
 
 
-class UseCaseResponse(Model):
+class UseCaseResponse(PydanticModel):
     result: Any = None
-    error: str = ''
+    error: str = ""
 
 
 class UseCase(Protocol):
@@ -22,16 +22,19 @@ class UseCase(Protocol):
         ):
             return self._execute(request)
 
-    def _get_context_vars(self, request: UseCaseRequest) -> dict[str, Any]:  # noqa: ARG002
+    def _get_context_vars(
+        self,
+        request: UseCaseRequest,  # noqa: ARG002
+    ) -> dict[str, Any]:
         """
         !!! WARNING:
             This method is calling out of transaction so do not make db
             queries in this method.
         """
         return {
-            'use_case': self.__class__.__name__,
+            "use_case": self.__class__.__name__,
         }
 
-    @transaction.atomic()
+    @transaction.atomic
     def _execute(self, request: UseCaseRequest) -> UseCaseResponse:
         raise NotImplementedError()
