@@ -185,5 +185,6 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
             sentry_sdk.integrations.DjangoIntegration(),
             sentry_sdk.integrations.CeleryIntegration(),
         ],
-        default_integrations=False,
+        enable_tracing=env.bool("SENTRY_ENABLE_TRACING", default=True),
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0),
     )
