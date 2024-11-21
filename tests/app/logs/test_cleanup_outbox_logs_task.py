@@ -5,14 +5,14 @@ from django.test import override_settings
 from freezegun import freeze_time
 
 from src.logs.models import OutboxLog
-from src.logs.tasks import cleanup_outbox
+from src.logs.tasks import cleanup_outbox_logs
 
 
-class TestCleanupOutbox:
+class TestCleanupOutboxLogsTask:
     def test_no_logs(self, ch_client: Client) -> None:
         assert OutboxLog.objects.count() == 0
 
-        cleanup_outbox()
+        cleanup_outbox_logs()
 
         assert OutboxLog.objects.count() == 0
 
@@ -26,7 +26,7 @@ class TestCleanupOutbox:
         assert OutboxLog.objects.filter(exported_at__isnull=True).count() == 4
 
         with freeze_time(daily_outbox_logs[3].exported_at + timedelta(seconds=1)):
-            cleanup_outbox()
+            cleanup_outbox_logs()
 
         assert OutboxLog.objects.filter(exported_at__isnull=False).count() == 2
         assert OutboxLog.objects.filter(exported_at__isnull=True).count() == 4

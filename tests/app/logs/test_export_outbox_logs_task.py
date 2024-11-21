@@ -4,10 +4,10 @@ from clickhouse_connect.driver import Client
 from django.test import override_settings
 
 from src.logs.models import OutboxLog
-from src.logs.tasks import export_outbox
+from src.logs.tasks import export_outbox_logs
 
 
-class TestExportOutbox:
+class TestExportOutboxLogsTask:
     def get_ch_event_logs(
         self,
         ch_client: Client,
@@ -20,7 +20,7 @@ class TestExportOutbox:
         assert OutboxLog.objects.count() == 0
         assert self.get_ch_event_logs(ch_client) == []
 
-        export_outbox()
+        export_outbox_logs()
 
         assert OutboxLog.objects.count() == 0
         assert self.get_ch_event_logs(ch_client) == []
@@ -35,7 +35,7 @@ class TestExportOutbox:
         assert OutboxLog.objects.filter(exported_at__isnull=True).count() == 4
         assert self.get_ch_event_logs(ch_client) == []
 
-        export_outbox()
+        export_outbox_logs()
 
         assert OutboxLog.objects.filter(exported_at__isnull=False).count() == 10
         assert OutboxLog.objects.filter(exported_at__isnull=True).count() == 0

@@ -12,12 +12,12 @@ app.autodiscover_tasks()
 app.conf.broker_connection_retry_on_startup = True
 
 app.conf.beat_schedule = {
-    "export_outbox": {
-        "task": "src.logs.tasks.export_outbox",
-        "schedule": crontab(minute="*"),
+    "export_outbox_logs": {
+        "task": "src.logs.tasks.export_outbox_logs",
+        "schedule": crontab(minute="*"),  # every minute
     },
-    "cleanup_outbox": {
-        "task": "src.logs.tasks.cleanup_outbox",
-        "schedule": crontab(minute="0", hour="0"),
+    "cleanup_outbox_logs": {
+        "task": "src.logs.tasks.cleanup_outbox_logs",
+        "schedule": crontab(minute="0", hour="0"),  # every day
     },
 }

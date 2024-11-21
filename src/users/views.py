@@ -10,6 +10,10 @@ from src.users.use_cases import CreateUser, CreateUserRequest
 
 @method_decorator(csrf_exempt, name="dispatch")
 class CreateUserView(View):
+    """
+    Позволяет создать нового пользователя и комплексно проверить работу приложения.
+    """
+
     def post(self, request: HttpRequest) -> JsonResponse:
         try:
             body = json.loads(request.body)

@@ -6,6 +6,8 @@ You can find detailed requirements by clicking the links:
 - [English version](docs/task_en.md)
 - [Russian version](docs/task_ru.md)
 
+#### Architecture description is located [here](docs/description.md).
+
 Tech stack:
 - Python 3.13
 - Django 5
