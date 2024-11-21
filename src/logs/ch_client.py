@@ -28,7 +28,7 @@ class ClickHouseRow:
     event_context: str
     metadata_version: int
 
-    def serialize(self) -> tuple[str, datetime, str, str, int]:
+    def to_tuple(self) -> tuple[str, datetime, str, str, int]:
         return (
             self.event_type,
             self.event_date_time,
@@ -64,7 +64,7 @@ class ClickHouseClient:
     def insert(self, data: list[ClickHouseRow]) -> None:
         try:
             self._client.insert(
-                data=[row.serialize() for row in data],
+                data=[row.to_tuple() for row in data],
                 column_names=EVENT_LOG_COLUMNS,
                 database=settings.CLICKHOUSE_SCHEMA,
                 table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,

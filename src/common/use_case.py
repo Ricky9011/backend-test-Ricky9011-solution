@@ -24,7 +24,7 @@ class UseCase(Protocol):
 
     def _get_context_vars(
         self,
-        request: UseCaseRequest,  # noqa: ARG002
+        request: UseCaseRequest,
     ) -> dict[str, Any]:
         """
         !!! WARNING:

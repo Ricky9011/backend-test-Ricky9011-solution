@@ -14,7 +14,7 @@ logger = structlog.get_logger(__name__)
 
 class OutboxLogger:
     @classmethod
-    def log(cls, data: list[BaseModel]) -> None:
+    def log(cls, data: list[BaseModel], batch_size: int = 500) -> None:
         """
         Сохраняет логи в базу данных для последующего экспорта в ClickHouse.
         """
@@ -29,12 +29,13 @@ class OutboxLogger:
                 )
                 for event in data
             ],
+            batch_size=batch_size,
         )
 
 
 class OutboxExporter:
     @classmethod
-    def export(cls) -> None:
+    def export(cls, batch_size: int | None = None) -> None:
         """
         Экспортирует не экспортированные ранее логи из базы данных в ClickHouse.
         Экспорт выполняется батчами.
@@ -48,11 +49,11 @@ class OutboxExporter:
         который смотрит только на очередь outbox.
         Для остальных очередей создать свои воркеры с любым concurrency.
         """
+        batch_size = batch_size or settings.CLICKHOUSE_BATCH_SIZE
 
         while True:
-            objs = OutboxLog.objects.filter(exported_at__isnull=True).order_by("id")[
-                : settings.CLICKHOUSE_BATCH_SIZE
-            ]
+            qs = OutboxLog.objects.filter(exported_at__isnull=True).order_by("id")
+            objs = qs[:batch_size]
             if not objs:
                 logger.info("no data to export, exiting")
                 return
