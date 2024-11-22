@@ -9,94 +9,97 @@ env = environ.Env(
     DEBUG=(bool, False),
 )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, "core/.env"))  # noqa: PTH118
+environ.Env.read_env(os.path.join(BASE_DIR, "src/core/.env"))  # noqa: PTH118
 
 DEBUG = env.bool("DEBUG", default=False)
-ENVIRONMENT = env('ENVIRONMENT', default='Local')
+ENVIRONMENT = env("ENVIRONMENT", default="Local")
+METADATA_VERSION = env("METADATA_VERSION", default=1)
 
 SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # project apps
-    'users',
+    "src.logs",
+    "src.users",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "src.core.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = "src.core.wsgi.application"
 
 DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
 
-CLICKHOUSE_HOST = env('CLICKHOUSE_HOST', default='clickhouse')
-CLICKHOUSE_PORT = env('CLICKHOUSE_HOST', default=8123)
-CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', default='')
-CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', default='')
-CLICKHOUSE_SCHEMA = os.getenv('CLICKHOUSE_SCHEMA', default='default')
-CLICKHOUSE_PROTOCOL = os.getenv('CLICKHOUSE_PROTOCOL', default='http')
+CLICKHOUSE_HOST = env("CLICKHOUSE_HOST", default="clickhouse")
+CLICKHOUSE_PORT = env("CLICKHOUSE_PORT", default=8123)
+CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", default="")
+CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD", default="")
+CLICKHOUSE_SCHEMA = os.getenv("CLICKHOUSE_SCHEMA", default="default")
+CLICKHOUSE_PROTOCOL = os.getenv("CLICKHOUSE_PROTOCOL", default="http")
 CLICKHOUSE_URI = (
-    f'clickhouse://{CLICKHOUSE_USER}:{CLICKHOUSE_PASSWORD}@{CLICKHOUSE_HOST}:{CLICKHOUSE_PORT}/{CLICKHOUSE_SCHEMA}?protocol='
-    f'{CLICKHOUSE_PROTOCOL}'
+    f"clickhouse://{CLICKHOUSE_USER}:{CLICKHOUSE_PASSWORD}@{CLICKHOUSE_HOST}:{CLICKHOUSE_PORT}/{CLICKHOUSE_SCHEMA}?protocol="
+    f"{CLICKHOUSE_PROTOCOL}"
 )
-CLICKHOUSE_EVENT_LOG_TABLE_NAME = 'event_log'
+CLICKHOUSE_EVENT_LOG_TABLE_NAME = "event_log"
+CLICKHOUSE_BATCH_SIZE = 1000
+CLICKHOUSE_CLEANUP_INTERVAL = 60 * 60 * 24 * 7  # 7 days
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = env("TIME_ZONE", default="Europe/Moscow")
 USE_I18N = True
@@ -108,9 +111,9 @@ MEDIA_ROOT = env("MEDIA_ROOT")
 STATIC_URL = env("STATIC_URL")
 STATIC_ROOT = env("STATIC_ROOT")
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
@@ -179,8 +182,9 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         dsn=SENTRY_SETTINGS["dsn"],
         environment=SENTRY_SETTINGS["environment"],
         integrations=[
-            sentry_sdk.DjangoIntegration(),
-            sentry_sdk.CeleryIntegration(),
+            sentry_sdk.integrations.DjangoIntegration(),
+            sentry_sdk.integrations.CeleryIntegration(),
         ],
-        default_integrations=False,
+        enable_tracing=env.bool("SENTRY_ENABLE_TRACING", default=True),
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0),
     )
