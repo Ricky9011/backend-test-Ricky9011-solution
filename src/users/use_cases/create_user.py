@@ -1,10 +1,12 @@
 from typing import Any
 
 import structlog
+from django.db import transaction
 
 from core.base_model import Model
-from core.event_log_client import EventLogClient
+from core.sentry import sentry_tracing
 from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
+from outbox.event_log import outbox_event_log
 from users.models import User
 
 logger = structlog.get_logger(__name__)
@@ -35,33 +37,34 @@ class CreateUser(UseCase):
             'last_name': request.last_name,
         }
 
+    @sentry_tracing("CreateUser")
     def _execute(self, request: CreateUserRequest) -> CreateUserResponse:
         logger.info('creating a new user')
+        try:
+            with transaction.atomic():
+                user, created = User.objects.get_or_create(
+                    email=request.email,
+                    defaults={
+                        'first_name': request.first_name, 'last_name': request.last_name,
+                    },
+                )
+                if created:
+                    logger.info('user has been created')
+                    self._log(user)
+                    return CreateUserResponse(result=user)
+                logger.error('unable to create a new user')
+                return CreateUserResponse(error='User with this email already exists')
+        except Exception as e:
+            logger.exception('an error occurred while creating a new user')
+            return CreateUserResponse(error=str(e))
 
-        user, created = User.objects.get_or_create(
-            email=request.email,
-            defaults={
-                'first_name': request.first_name, 'last_name': request.last_name,
-            },
+    @staticmethod
+    def _log(user: User) -> None:
+        outbox_event_log.insert_event(
+            UserCreated(
+                email=user.email,
+                first_name=user.first_name,
+                last_name=user.last_name,
+            ),
         )
-
-        if created:
-            logger.info('user has been created')
-            self._log(user)
-            return CreateUserResponse(result=user)
-
-        logger.error('unable to create a new user')
-        return CreateUserResponse(error='User with this email already exists')
-
-    def _log(self, user: User) -> None:
-        with EventLogClient.init() as client:
-            client.insert(
-                data=[
-                    UserCreated(
-                        email=user.email,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                    ),
-                ],
-            )
 

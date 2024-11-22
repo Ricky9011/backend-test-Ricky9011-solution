@@ -1,5 +1,9 @@
 run:
-	docker compose up
+	docker compose up --build
+stop:
+	docker compose down --remove-orphans
+clean:
+	docker volume prune
 install:
 	make migrations
 	make migrate

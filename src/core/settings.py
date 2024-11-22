@@ -4,6 +4,9 @@ from pathlib import Path
 import environ
 import sentry_sdk
 import structlog
+from celery.schedules import crontab
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 env = environ.Env(
     DEBUG=(bool, False),
@@ -27,9 +30,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
 
     # project apps
     'users',
+    'outbox',
 ]
 
 MIDDLEWARE = [
@@ -77,6 +82,7 @@ CLICKHOUSE_URI = (
     f'{CLICKHOUSE_PROTOCOL}'
 )
 CLICKHOUSE_EVENT_LOG_TABLE_NAME = 'event_log'
+CLICKHOUSE_BUFFER_EVENT_LOG_TABLE_NAME = 'buffer_event_log'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -110,8 +116,20 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_BROKER", default="redis://localhost:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
+
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULE = {
+    'process-outbox-every-minute': {
+        'task': 'outbox.tasks.process_outbox_events',
+        'schedule': crontab(minute="*"),
+    },
+}
+
+
+CHUNK_SIZE = env("CHUNK_SIZE", default=100)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
@@ -179,8 +197,8 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         dsn=SENTRY_SETTINGS["dsn"],
         environment=SENTRY_SETTINGS["environment"],
         integrations=[
-            sentry_sdk.DjangoIntegration(),
-            sentry_sdk.CeleryIntegration(),
+            DjangoIntegration(),
+            CeleryIntegration(),
         ],
         default_integrations=False,
     )

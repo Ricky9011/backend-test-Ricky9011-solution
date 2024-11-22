@@ -1,3 +1,7 @@
+# Solution
+
+The solution is located at the [link](docs/project_guide.md)
+
 # Die Hard
 
 This is a project with a test task for backend developers.
