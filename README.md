@@ -1,3 +1,4 @@
+
 # Die Hard
 
 This is a project with a test task for backend developers.
@@ -16,7 +17,7 @@ Tech stack:
 
 ## Installation
 
-Put a `.env` file into the `src/core` directory. You can start with a template file:
+(run project just as it was ran before) Put a `.env` file into the `src/core` directory. You can start with a template file:
 
 ```
 cp src/core/.env.ci src/core/.env
@@ -35,8 +36,15 @@ make install
 
 ## Tests
 
-`make test`
+`make test` (same as before)
 
 ## Linter
 
-`make lint`
+`make lint` (didn't fix it, sorry)
+
+## Solution explanation
+
+Nothing special, just used transactional outbox pattern as it was stated in the task, for message relay used kind of polling publisher pattern (with update instead of delete because updates should be faster)
+
+### Simple arch diagram:
+![Scheme](https://i.ibb.co/zrTm0gq/scheme.png)

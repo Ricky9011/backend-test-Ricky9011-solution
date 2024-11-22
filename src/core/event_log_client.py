@@ -1,15 +1,14 @@
-import re
+import datetime as dt
 from collections.abc import Generator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Protocol
 
 import clickhouse_connect
 import structlog
 from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
-from django.utils import timezone
 
-from core.base_model import Model
+from events.publisher import PublishedEvent
 
 logger = structlog.get_logger(__name__)
 
@@ -21,7 +20,22 @@ EVENT_LOG_COLUMNS = [
 ]
 
 
-class EventLogClient:
+class EventLogClientProtocol(Protocol):
+    """Base event log protocol for any future Clickhouse replacing"""
+
+    @classmethod
+    @contextmanager
+    def init(cls) -> Generator['EventLogClientProtocol']:
+        raise NotImplementedError()
+
+    def insert(self, data: Any) -> None:
+        raise NotImplementedError()
+
+    def query(self, query: str) -> Any:
+        raise NotImplementedError()
+
+
+class EventLogClient(EventLogClientProtocol):
     def __init__(self, client: clickhouse_connect.driver.Client) -> None:
         self._client = client
 
@@ -46,7 +60,7 @@ class EventLogClient:
 
     def insert(
         self,
-        data: list[Model],
+        data: list[PublishedEvent],
     ) -> None:
         try:
             self._client.insert(
@@ -57,6 +71,7 @@ class EventLogClient:
             )
         except DatabaseError as e:
             logger.error('unable to insert data to clickhouse', error=str(e))
+            raise
 
     def query(self, query: str) -> Any:  # noqa: ANN401
         logger.debug('executing clickhouse query', query=query)
@@ -67,18 +82,13 @@ class EventLogClient:
             logger.error('failed to execute clickhouse query', error=str(e))
             return
 
-    def _convert_data(self, data: list[Model]) -> list[tuple[Any]]:
-        return [
-            (
-                self._to_snake_case(event.__class__.__name__),
-                timezone.now(),
-                settings.ENVIRONMENT,
-                event.model_dump_json(),
-            )
-            for event in data
-        ]
-
-    def _to_snake_case(self, event_name: str) -> str:
-        result = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', event_name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', result).lower()
-
+    def _convert_data(self, data: list[PublishedEvent]) -> list[tuple[str, dt.datetime, str, str]]:
+            return [
+                (
+                    event.event_type,
+                    event.event_date_time,
+                    event.environment,
+                    event.event_context,
+                )
+                for event in data
+            ]
