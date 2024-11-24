@@ -43,6 +43,29 @@ services:
       - 8123:8123
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+  celery:
+    build: .
+    restart: always
+    depends_on:
+      - redis
+      - db
+    command: ["celery", "-A", "core", "worker", "--loglevel=info"]
+    volumes:
+      - .:/srv/app
+    networks:
+      - default
+
+  celery-beat:
+    build: .
+    restart: always
+    depends_on:
+      - redis
+      - db
+    command: ["celery", "-A", "core", "beat", "--loglevel=info"]
+    volumes:
+      - .:/srv/app
+    networks:
+      - default
 
 
 volumes:
