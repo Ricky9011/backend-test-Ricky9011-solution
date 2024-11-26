@@ -1,6 +1,8 @@
+import json
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
+from datetime import datetime
 from typing import Any
 
 import clickhouse_connect
@@ -21,6 +23,14 @@ EVENT_LOG_COLUMNS = [
 ]
 
 
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder for datetime objects"""
+    def default(self, obj: datetime | Model) -> str:
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
+
 class EventLogClient:
     def __init__(self, client: clickhouse_connect.driver.Client) -> None:
         self._client = client
@@ -29,13 +39,13 @@ class EventLogClient:
     @contextmanager
     def init(cls) -> Generator['EventLogClient']:
         client = clickhouse_connect.get_client(
-            host=settings.CLICKHOUSE_HOST,
+            host=settings.CLICKHOUSE_HOST.strip(),
             port=settings.CLICKHOUSE_PORT,
             user=settings.CLICKHOUSE_USER,
             password=settings.CLICKHOUSE_PASSWORD,
-            query_retries=2,
-            connect_timeout=30,
-            send_receive_timeout=10,
+            query_retries=5,
+            connect_timeout=60,
+            send_receive_timeout=30,
         )
         try:
             yield cls(client)
@@ -46,14 +56,15 @@ class EventLogClient:
 
     def insert(
         self,
-        data: list[Model],
+        data: list[tuple[Any, ...]],
+        column_names: list[str],
+        table: str = settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
     ) -> None:
         try:
             self._client.insert(
-                data=self._convert_data(data),
-                column_names=EVENT_LOG_COLUMNS,
-                database=settings.CLICKHOUSE_SCHEMA,
-                table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
+                table=table,
+                data=data,
+                column_names=column_names,
             )
         except DatabaseError as e:
             logger.error('unable to insert data to clickhouse', error=str(e))
@@ -67,13 +78,24 @@ class EventLogClient:
             logger.error('failed to execute clickhouse query', error=str(e))
             return
 
-    def _convert_data(self, data: list[Model]) -> list[tuple[Any]]:
+    def _convert_data(self, data: list[dict | Model]) -> list[tuple[Any]]:
+        """
+        Convert input data to format suitable for ClickHouse.
+        Handles both Pydantic models and dictionaries.
+        """
+        def get_json_data(event: dict | Model) -> str:
+            if isinstance(event, dict):
+                return json.dumps(event, cls=DateTimeEncoder)
+            return event.model_dump_json()
+
         return [
             (
-                self._to_snake_case(event.__class__.__name__),
+                self._to_snake_case(
+                    event.__class__.__name__ if isinstance(event, Model) else 'dict',
+                ),
                 timezone.now(),
                 settings.ENVIRONMENT,
-                event.model_dump_json(),
+                get_json_data(event),
             )
             for event in data
         ]

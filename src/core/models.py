@@ -21,3 +21,36 @@ class TimeStampedModel(models.Model):
             update_fields.add('updated_at')
 
         super().save(force_insert, force_update, using, update_fields)
+
+
+class OutboxEvent(TimeStampedModel):
+    """
+    Temporary storage for events before they are sent to ClickHouse.
+    Acts as a reliable event log that guarantees event delivery.
+    """
+    STATUS_PENDING = 'pending'
+    STATUS_PROCESSED = 'processed'
+    STATUS_FAILED = 'failed'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Pending'),
+        (STATUS_PROCESSED, 'Processed'),
+        (STATUS_FAILED, 'Failed'),
+    ]
+
+    event_type = models.CharField(max_length=255)
+    event_data = models.JSONField()
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING,
+        db_index=True,
+    )
+    retry_count = models.IntegerField(default=0)
+    error_message = models.TextField(blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['status', 'created_at']),
+        ]
