@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # project apps
+    'core',
     'users',
 ]
 
@@ -66,8 +67,9 @@ DATABASES = {
     "default": env.db("DATABASE_URL"),
 }
 
+
 CLICKHOUSE_HOST = env('CLICKHOUSE_HOST', default='clickhouse')
-CLICKHOUSE_PORT = env('CLICKHOUSE_HOST', default=8123)
+CLICKHOUSE_PORT = env.int('CLICKHOUSE_PORT', default=8123)
 CLICKHOUSE_USER = os.getenv('CLICKHOUSE_USER', default='')
 CLICKHOUSE_PASSWORD = os.getenv('CLICKHOUSE_PASSWORD', default='')
 CLICKHOUSE_SCHEMA = os.getenv('CLICKHOUSE_SCHEMA', default='default')
@@ -77,6 +79,9 @@ CLICKHOUSE_URI = (
     f'{CLICKHOUSE_PROTOCOL}'
 )
 CLICKHOUSE_EVENT_LOG_TABLE_NAME = 'event_log'
+
+CLICKHOUSE_BATCH_SIZE = env.int('CLICKHOUSE_BATCH_SIZE', default=100)
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -110,8 +115,21 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = env('CELERY_BROKER', default='redis://redis:6379/0')
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
+
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULE = {
+    'process_outbox_events': {
+        'task': 'core.tasks.process_outbox_events',
+        'schedule': 60.0,  # run every minute
+    },
+}
+# Добавим эту настройку для устранения предупреждения
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
@@ -184,3 +202,5 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         ],
         default_integrations=False,
     )
+
+MAX_RETRY_COUNT = env.int('MAX_RETRY_COUNT', default=3)

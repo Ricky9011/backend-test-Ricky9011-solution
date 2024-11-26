@@ -43,8 +43,40 @@ services:
       - 8123:8123
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
 
+  celery_worker:
+      build: .
+      command: celery -A core worker --loglevel=INFO
+      volumes:
+        - .:/srv/app
+      depends_on:
+        redis:
+          condition: service_started
+        db:
+          condition: service_started
+        clickhouse:
+          condition: service_healthy
+      environment:
+        - CELERY_BROKER_URL=redis://redis:6379/0
 
+  celery_beat:
+    build: .
+    command: celery -A core beat --loglevel=INFO
+    volumes:
+      - .:/srv/app
+    depends_on:
+      - redis
+      - db
+      - clickhouse
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+        
 volumes:
   dev-db-data: {}
   app_media_files: { }
