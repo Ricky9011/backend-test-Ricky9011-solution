@@ -19,10 +19,10 @@ This project implements the Transactional Outbox Pattern to ensure reliable even
 
 ```mermaid
 graph TD
-    A[User Creation] --> B[Store Event in Outbox (PostgreSQL)]
-    B --> C[Celery Beat Schedules Task]
-    C --> D[Celery Worker Processes Outbox]
-    D --> E[Write Logs to ClickHouse]
+    A["User Creation"] --> B["Store Event in Outbox (PostgreSQL)"]
+    B --> C["Celery Beat Schedules Task"]
+    C --> D["Celery Worker Processes Outbox"]
+    D --> E["Write Logs to ClickHouse"]
 ```
 
 ## Installation
