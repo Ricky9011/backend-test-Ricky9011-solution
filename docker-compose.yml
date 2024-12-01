@@ -43,6 +43,27 @@ services:
       - 8123:8123
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+  
+  celery_worker:
+    build: .
+    command: celery -A core worker --loglevel=info
+    depends_on:
+      - app
+      - redis
+    environment:
+      POSTGRES_USER: test_pg_user
+      POSTGRES_PASSWORD: 123456
+    volumes:
+      - .:/srv/app
+
+  celery_beat:
+    build: .
+    command: celery -A core beat --loglevel=info
+    depends_on:
+      - app
+      - redis
+    volumes:
+      - .:/srv/app
 
 
 volumes:
