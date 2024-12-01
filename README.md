@@ -17,12 +17,13 @@ Tech stack:
 
 This project implements the Transactional Outbox Pattern to ensure reliable event logging. When a user is created, an event is stored in the outbox table in PostgreSQL. A periodic Celery task processes these events and writes logs to ClickHouse.
 
+```mermaid
 graph TD
     A[User Creation] --> B[Store Event in Outbox (PostgreSQL)]
     B --> C[Celery Beat Schedules Task]
     C --> D[Celery Worker Processes Outbox]
     D --> E[Write Logs to ClickHouse]
-
+```
 
 ## Installation
 
