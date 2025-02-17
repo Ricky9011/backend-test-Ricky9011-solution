@@ -1,4 +1,3 @@
-import re
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
@@ -46,17 +45,18 @@ class EventLogClient:
 
     def insert(
         self,
-        data: list[Model],
+        data: list[Any],
     ) -> None:
         try:
             self._client.insert(
-                data=self._convert_data(data),
+                data=data,
                 column_names=EVENT_LOG_COLUMNS,
                 database=settings.CLICKHOUSE_SCHEMA,
                 table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
             )
         except DatabaseError as e:
             logger.error('unable to insert data to clickhouse', error=str(e))
+            raise e
 
     def query(self, query: str) -> Any:  # noqa: ANN401
         logger.debug('executing clickhouse query', query=query)
@@ -66,19 +66,3 @@ class EventLogClient:
         except DatabaseError as e:
             logger.error('failed to execute clickhouse query', error=str(e))
             return
-
-    def _convert_data(self, data: list[Model]) -> list[tuple[Any]]:
-        return [
-            (
-                self._to_snake_case(event.__class__.__name__),
-                timezone.now(),
-                settings.ENVIRONMENT,
-                event.model_dump_json(),
-            )
-            for event in data
-        ]
-
-    def _to_snake_case(self, event_name: str) -> str:
-        result = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', event_name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', result).lower()
-
