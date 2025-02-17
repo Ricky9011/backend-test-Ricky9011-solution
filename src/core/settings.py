@@ -11,7 +11,7 @@ env = environ.Env(
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-environ.Env.read_env(os.path.join(BASE_DIR, "core/.env"))  # noqa: PTH118
+environ.Env.read_env(os.path.join(BASE_DIR, "core/.env.ci"))  # noqa: PTH118
 
 DEBUG = env.bool("DEBUG", default=False)
 ENVIRONMENT = env('ENVIRONMENT', default='Local')
@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_celery_beat',
 
     # project apps
     'users',
@@ -77,6 +78,8 @@ CLICKHOUSE_URI = (
     f'{CLICKHOUSE_PROTOCOL}'
 )
 CLICKHOUSE_EVENT_LOG_TABLE_NAME = 'event_log'
+CLICKHOUSE_BATCH_SIZE = os.getenv('CLICKHOUSE_BATCH_SIZE', default=1000)
+CLICKHOUSE_UPDATE_INTERVAL = os.getenv('CLICKHOUSE_UPDATE_INTERVAL', default=10)
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -110,7 +113,8 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER = env("CELERY_BROKER", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")

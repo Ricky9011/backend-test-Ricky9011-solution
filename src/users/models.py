@@ -23,3 +23,11 @@ class User(TimeStampedModel, AbstractBaseUser):
             return f'{self.first_name} {self.last_name}'
 
         return self.email
+
+
+class EventOutbox(models.Model):
+    event_type = models.CharField(max_length=255)
+    event_date_time = models.DateTimeField(auto_now_add=True)
+    environment = models.CharField(max_length=255)
+    event_context = models.JSONField()
+    metadata_version = models.PositiveIntegerField(default=1)
