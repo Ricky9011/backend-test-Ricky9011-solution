@@ -37,7 +37,7 @@ jobs:
         run: make test
 
   teardown:
-    needs: [migrations, lint, test]
+    needs: [lint, test]
     runs-on: ubuntu-latest
     if: always()
     steps:
