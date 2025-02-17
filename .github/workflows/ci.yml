@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  setup:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,26 +20,20 @@ jobs:
         run: cp src/core/.env.ci src/core/.env
 
       - name: Build and start containers
-        run: make run
+        run: |
+          make run
 
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
+      - name: Run migrations
+        run: |
+          make migrations
+          make migrate
+
       - name: Run linter
         run: make lint
 
-  test:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
       - name: Run tests
         run: make test
 
-  teardown:
-    needs: [lint, test]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
       - name: Tear down containers
+        if: always()
         run: docker compose down
