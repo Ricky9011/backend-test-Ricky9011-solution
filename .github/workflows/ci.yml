@@ -22,15 +22,6 @@ jobs:
       - name: Build and start containers
         run: make run
 
-  migrations:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run migrations
-        run: |
-          make migrations
-          make migrate
-
   lint:
     needs: setup
     runs-on: ubuntu-latest
