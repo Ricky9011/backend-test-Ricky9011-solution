@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 import environ
@@ -27,7 +28,9 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # project apps
+    # project apps,
+    "django_celery_beat",
+    "core.apps.CoreConfig",
     "users",
 ]
 
@@ -39,6 +42,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "sentry_sdk.integrations.django.middleware.SentryMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -110,8 +114,6 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
-CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
@@ -184,3 +186,17 @@ if SENTRY_SETTINGS.get("dsn") and not DEBUG:
         ],
         default_integrations=False,
     )
+
+
+CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
+
+
+CH_OUTBOX_BATCH_SIZE = int(env("CH_OUTBOX_BATCH_SIZE", default=1000))
+
+CELERY_BEAT_SCHEDULE = {
+    "test_task": {
+        "task": "core.tasks.process_outbox",
+        "schedule": timedelta(seconds=int(env("CH_OUTBOX_PROCESSING_FREQUENCY_SEC", default=5))),
+    },
+}

@@ -7,6 +7,7 @@ services:
     depends_on:
       - db
       - clickhouse
+      - redis
     command: ["../docker/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000"]
     ports:
       - 8000:8000
@@ -14,6 +15,34 @@ services:
       - app_static_files:/srv/app/static:rw
       - app_media_files:/srv/app/media:rw
       - .:/srv/app
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+
+  celery_worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - app
+      - redis
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/srv/app
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
+
+  celery_beat:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - app
+      - redis
+    command: celery -A core beat --loglevel=info
+    volumes:
+      - .:/srv/app
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
 
   db:
     tty: true
@@ -36,7 +65,8 @@ services:
       - default
     ports:
       - 6379:6379
-
+    volumes:
+      - redis_data:/data
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
     ports:
@@ -48,3 +78,4 @@ volumes:
   dev-db-data: {}
   app_media_files: {}
   app_static_files: {}
+  redis_data: {}
