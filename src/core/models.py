@@ -9,15 +9,26 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None, # noqa
-    ) -> None:
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None) -> None:  # noqa
         # https://docs.djangoproject.com/en/5.1/ref/models/fields/#django.db.models.DateField.auto_now
         self.updated_at = timezone.now()
 
         if isinstance(update_fields, list):
-            update_fields.append('updated_at')
+            update_fields.append("updated_at")
         elif isinstance(update_fields, set):
-            update_fields.add('updated_at')
+            update_fields.add("updated_at")
 
         super().save(force_insert, force_update, using, update_fields)
+
+
+class OutboxEvent(models.Model):
+    event_type = models.CharField(max_length=255)
+    event_date_time = models.DateTimeField(default=timezone.now)
+    environment = models.CharField(max_length=50)
+    event_context = models.JSONField()
+    metadata_version = models.BigIntegerField(default=1)
+    processed = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "outbox_event"
+        app_label = "core"

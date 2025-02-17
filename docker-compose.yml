@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -7,13 +7,46 @@ services:
     depends_on:
       - db
       - clickhouse
-    command: [ "../docker/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000" ]
+      - redis
+    command: >
+      sh -c "../docker/wait-for-it.sh db:5432 -- 
+      && python manage.py makemigrations 
+      && python manage.py migrate 
+      && python manage.py runserver 0.0.0.0:8000"
     ports:
       - 8000:8000
     volumes:
       - app_static_files:/srv/app/static:rw
       - app_media_files:/srv/app/media:rw
       - .:/srv/app
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+
+  celery_worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - app
+      - redis
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/srv/app
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
+
+  celery_beat:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - app
+      - redis
+    command: celery -A core beat --loglevel=info
+    volumes:
+      - .:/srv/app
+    environment:
+      - CELERY_BROKER=redis://redis:6379/0
+      - DJANGO_SETTINGS_MODULE=core.settings
 
   db:
     tty: true
@@ -36,7 +69,8 @@ services:
       - default
     ports:
       - 6379:6379
-
+    volumes:
+      - redis_data:/data
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
     ports:
@@ -44,8 +78,8 @@ services:
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
 
-
 volumes:
   dev-db-data: {}
-  app_media_files: { }
-  app_static_files: { }
+  app_media_files: {}
+  app_static_files: {}
+  redis_data: {}

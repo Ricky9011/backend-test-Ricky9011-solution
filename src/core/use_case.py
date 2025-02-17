@@ -12,7 +12,7 @@ class UseCaseRequest(Model):
 
 class UseCaseResponse(Model):
     result: Any = None
-    error: str = ''
+    error: str = ""
 
 
 class UseCase(Protocol):
@@ -29,7 +29,7 @@ class UseCase(Protocol):
             queries in this method.
         """
         return {
-            'use_case': self.__class__.__name__,
+            "use_case": self.__class__.__name__,
         }
 
     @transaction.atomic()

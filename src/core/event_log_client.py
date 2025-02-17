@@ -1,4 +1,3 @@
-import re
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
@@ -7,17 +6,17 @@ import clickhouse_connect
 import structlog
 from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
-from django.utils import timezone
 
-from core.base_model import Model
+from core.models import OutboxEvent
 
 logger = structlog.get_logger(__name__)
 
 EVENT_LOG_COLUMNS = [
-    'event_type',
-    'event_date_time',
-    'environment',
-    'event_context',
+    "event_type",
+    "event_date_time",
+    "environment",
+    "event_context",
+    "metadata_version",
 ]
 
 
@@ -27,7 +26,7 @@ class EventLogClient:
 
     @classmethod
     @contextmanager
-    def init(cls) -> Generator['EventLogClient']:
+    def init(cls) -> Generator["EventLogClient"]:
         client = clickhouse_connect.get_client(
             host=settings.CLICKHOUSE_HOST,
             port=settings.CLICKHOUSE_PORT,
@@ -40,45 +39,38 @@ class EventLogClient:
         try:
             yield cls(client)
         except Exception as e:
-            logger.error('error while executing clickhouse query', error=str(e))
+            logger.error("error while executing clickhouse query", error=str(e))
         finally:
             client.close()
 
-    def insert(
-        self,
-        data: list[Model],
-    ) -> None:
+    def insert(self, outbox_events: list[OutboxEvent]) -> None:
         try:
             self._client.insert(
-                data=self._convert_data(data),
+                data=self._convert_outbox_events(outbox_events),
                 column_names=EVENT_LOG_COLUMNS,
                 database=settings.CLICKHOUSE_SCHEMA,
                 table=settings.CLICKHOUSE_EVENT_LOG_TABLE_NAME,
             )
         except DatabaseError as e:
-            logger.error('unable to insert data to clickhouse', error=str(e))
+            logger.error("unable to insert data to clickhouse", error=str(e))
 
     def query(self, query: str) -> Any:  # noqa: ANN401
-        logger.debug('executing clickhouse query', query=query)
+        logger.debug("executing clickhouse query", query=query)
 
         try:
             return self._client.query(query).result_rows
         except DatabaseError as e:
-            logger.error('failed to execute clickhouse query', error=str(e))
+            logger.error("failed to execute clickhouse query", error=str(e))
             return
 
-    def _convert_data(self, data: list[Model]) -> list[tuple[Any]]:
+    def _convert_outbox_events(self, outbox_events: list[OutboxEvent]) -> list[tuple]:
         return [
             (
-                self._to_snake_case(event.__class__.__name__),
-                timezone.now(),
-                settings.ENVIRONMENT,
-                event.model_dump_json(),
+                event.event_type,
+                event.event_date_time,
+                event.environment,
+                event.event_context,
+                event.metadata_version,
             )
-            for event in data
+            for event in outbox_events
         ]
-
-    def _to_snake_case(self, event_name: str) -> str:
-        result = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', event_name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', result).lower()
-
