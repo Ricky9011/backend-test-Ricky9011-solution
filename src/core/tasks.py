@@ -10,9 +10,7 @@ from core.models import OutboxEvent
 @shared_task(autoretry_for=(Exception,), retry_backoff=True)
 def process_outbox() -> None:
     with start_transaction(op="celery_task", name="process_outbox"):
-
         batch_size = settings.CH_OUTBOX_BATCH_SIZE
-
         with transaction.atomic():
             events = OutboxEvent.objects.select_for_update(skip_locked=True).filter(processed=False)[:batch_size]
             if not events:
