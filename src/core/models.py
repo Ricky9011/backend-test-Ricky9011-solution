@@ -9,10 +9,7 @@ class TimeStampedModel(models.Model):
     class Meta:
         abstract = True
 
-    def save(
-        self, force_insert=False, force_update=False, using=None, update_fields=None, # noqa
-    ) -> None:
-        # https://docs.djangoproject.com/en/5.1/ref/models/fields/#django.db.models.DateField.auto_now
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None, **kwargs) -> None:       # https://docs.djangoproject.com/en/5.1/ref/models/fields/#django.db.models.DateField.auto_now
         self.updated_at = timezone.now()
 
         if isinstance(update_fields, list):

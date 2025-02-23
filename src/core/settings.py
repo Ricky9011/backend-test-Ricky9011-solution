@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
     # project apps
     'users',
+    'logs',  #new app for logs registry logic
 ]
 
 MIDDLEWARE = [
